@@ -142,6 +142,7 @@ function Dashboard() {
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   
   useEffect(() => {
+    alert("Dash")
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 1000)
@@ -294,12 +295,29 @@ function Gerenciamento() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [turmas, setTurmas] = useState([])
   const [filtroTurma, setFiltroTurma] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
   const [filtroNome, setFiltroNome] = useState('')
   const [alunos, setAlunos] = useState([
-    { ra: 1, nome: 'Guilherme Castro', nascimento: '15/03/2000', email: 'guilherme.castro@email.com', celular: '(11) 99999-1234', turma: 'Turma Violão', ativo: true, faltas: 2, totalAulas: 20 }
+    
   ])
+
+
+useEffect(() => {
+    // Função assíncrona dentro do useEffect
+    const carregarUsuarios = async () => {
+      try {
+        const resposta = await UsuarioService.findAll();
+        setAlunos(resposta.data); // supondo que 'resposta' já seja um array de usuários
+      //  console.log("Id aluno " + resposta.data[0].id)
+      } catch (erro) {
+        console.error('Erro ao listar usuários:', erro);
+      }
+    };
+
+    carregarUsuarios();
+  }, []);
   
   const toggleStatus = (index) => {
     const novosAlunos = [...alunos]
@@ -307,12 +325,12 @@ function Gerenciamento() {
     setAlunos(novosAlunos)
   }
   
-  let alunosFiltrados = alunos
-  if (filtroNome) alunosFiltrados = alunosFiltrados.filter(aluno => aluno.nome.toLowerCase().includes(filtroNome.toLowerCase()))
-  if (filtroTurma) alunosFiltrados = alunosFiltrados.filter(aluno => aluno.turma === filtroTurma)
-  if (filtroStatus) alunosFiltrados = alunosFiltrados.filter(aluno => filtroStatus === 'ativo' ? aluno.ativo : !aluno.ativo)
+  //let alunosFiltrados = alunos
+  //if (filtroNome) alunosFiltrados = alunosFiltrados.filter(aluno => aluno.nome.toLowerCase().includes(filtroNome.toLowerCase()))
+  //if (filtroTurma) alunosFiltrados = alunosFiltrados.filter(aluno => aluno.turma === filtroTurma)
+  //if (filtroStatus) alunosFiltrados = alunosFiltrados.filter(aluno => filtroStatus === 'ativo' ? aluno.ativo : !aluno.ativo)
   
-  const turmas = [...new Set(alunos.map(aluno => aluno.turma))]
+  //const turmas = [...new Set(alunos.map(aluno => aluno.turma))]
   
   return (
     <div className="dashboard">
@@ -391,7 +409,7 @@ function Gerenciamento() {
                 <tr>
                   <th>R.A.</th>
                   <th>Aluno</th>
-                  <th>Turma</th>
+                  
                   <th>Status</th>
                   <th>Nascimento</th>
                   <th>Email</th>
@@ -400,26 +418,26 @@ function Gerenciamento() {
                 </tr>
               </thead>
               <tbody>
-                {alunosFiltrados.map((aluno, index) => {
-                  const originalIndex = alunos.findIndex(a => a.ra === aluno.ra && a.nome === aluno.nome)
+                {alunos.map((aluno, index) => {
+                  const originalIndex = alunos.findIndex(a => a.rm === aluno.rm && a.nome === aluno.nome)
                   return (
-                    <tr key={index} className={!aluno.ativo ? 'inactive-row' : ''}>
-                      <td>{aluno.ra}</td>
+                    <tr key={index} className={aluno.statusUsuario == 'Inativo' ? 'inactive-row' : ''}>
+                      <td>{aluno.rm}</td>
                       <td>
-                        <div className="student-info" onClick={() => navigate(`/aluno/${aluno.ra}`)} style={{cursor: 'pointer'}}>
+                        <div className="student-info" onClick={() => navigate(`/aluno/${aluno.rm}`)} style={{cursor: 'pointer'}}>
                           <span className="student-icon">👥</span>
                           {aluno.nome}
                         </div>
                       </td>
-                      <td>{aluno.turma}</td>
+                      
                       <td>
-                        <span className={`status ${aluno.ativo ? 'ativo' : 'inativo'}`}>
-                          {aluno.ativo ? '✓' : 'X'}
+                        <span className={`status ${aluno.statusUsuario ? 'Ativo' : 'Inativo'}`}>
+                          {aluno.statusUsuario ? '✓' : 'X'}
                         </span>
                       </td>
-                      <td>{aluno.nascimento}</td>
+                      <td>{aluno.dataNascimento}</td>
                       <td>{aluno.email}</td>
-                      <td>{aluno.celular}</td>
+                      <td>{aluno.telefone}</td>
                       <td>
                         <div className="action-buttons">
                           <button className="action-btn view">Ver</button>
@@ -428,7 +446,7 @@ function Gerenciamento() {
                             className={`action-btn toggle ${aluno.ativo ? 'deactivate' : 'activate'}`}
                             onClick={() => toggleStatus(originalIndex)}
                           >
-                            {aluno.ativo ? 'X' : '✓'}
+                            {aluno.statusUsuario ? 'X' : '✓'}
                           </button>
                         </div>
                       </td>
@@ -941,7 +959,8 @@ function CadastrarUsuario() {
         email: formData.get('email'),
         nivelAcesso: formData.get('nivelAcesso'),
         senha: formData.get('senha'),
-        dataNascimento: formData.get('dataNascimento')
+        dataNascimento: formData.get('dataNascimento'),
+        rm: formData.get('rm')
       })
       setMessage({ type: 'success', text: 'Usuário cadastrado com sucesso!' })
       setShowMessage(true)
@@ -1023,6 +1042,10 @@ function CadastrarUsuario() {
                 <div className="input-box">
                   <label htmlFor="email">E-mail</label>
                   <input id="email" type="email" name="email" className="input-field" placeholder="Digite o email" required />
+                </div>
+                  <div className="input-box">
+                  <label htmlFor="rm">RM</label>
+                  <input id="rm" type="text" name="rm" className="input-field" placeholder="Digite o rm" required />
                 </div>
                 <div className="input-box">
                   <label htmlFor="senha">Senha</label>
@@ -1701,8 +1724,8 @@ function EditarAluno() {
     const userData = new FormData()
     userData.append('nome', formData.get('nome'))
     userData.append('email', formData.get('email'))
-    userData.append('celular', formData.get('celular'))
-    userData.append('turma', formData.get('turma'))
+    userData.append('telefone', formData.get('telefone'))
+    userData.append('senha', formData.get('senha'))
     
     try {
       await UsuarioService.update(aluno.ra, userData)
@@ -1782,17 +1805,12 @@ function EditarAluno() {
                   <input id="email" type="email" name="email" className="input-field" defaultValue={aluno.email} required />
                 </div>
                 <div className="input-box">
-                  <label htmlFor="celular">Celular</label>
-                  <input id="celular" type="tel" name="celular" className="input-field" defaultValue={aluno.celular} required />
+                  <label htmlFor="telefone">Telefone</label>
+                  <input id="telefone" type="text" name="telefone" className="input-field" defaultValue={aluno.telefone} required />
                 </div>
                 <div className="input-box">
-                  <label htmlFor="turma">Turma</label>
-                  <select id="turma" name="turma" className="input-field" defaultValue={aluno.turma} required>
-                    <option value="Turma Violão">Turma Violão</option>
-                    <option value="Turma Piano">Turma Piano</option>
-                    <option value="Turma Bateria">Turma Bateria</option>
-                    <option value="Turma Trompete">Turma Trompete</option>
-                  </select>
+                  <label htmlFor="senha">Senha</label>
+                  <input id="senha" type="password" name="senha" className="input-field" defaultValue={aluno.senha} required />
                 </div>
               </div>
               <div className="continue-button">
